@@ -1,5 +1,5 @@
 # vatsimFPL
-Takes latest filed Vatsim flightplan and display.
+Takes latest filed Vatsim flightplan and displays it.
 
 # Main Function:
 So you filed your flightplan, you're in the cockpit. You call up clearance and oh no!
