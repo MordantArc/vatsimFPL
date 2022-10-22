@@ -19,6 +19,7 @@ response = requests.get("https://api.vatsim.net/api/")
 baseLink = "https://api.vatsim.net/api/"
 
 initGroup = Group()
+routeGroup = Group()
 
 
 #Labels n shit that displays changable values from the fp
@@ -30,17 +31,20 @@ callsign = Label("-----",370,45,bold=True)
 callsignD = Label("Callsign:",315,45)
 cruisespdG = Label("000"+"kts",375,60,bold=True)
 cruisespdD = Label("Cruise Speed:",315,60)
-arrow = Line(75,350,325,350,lineWidth=10,arrowEnd=True)
+arrow = Line(75,350,325,350,lineWidth=5,arrowEnd=True)
 dep = Label("----",20,350,bold=True,size=24,align='left')
 arr = Label("----",380,350,bold=True,size=24,align='right')
 altD = Label("Alt",200,365,size=12.5)
 alt = Label("----",200,385,bold=True,size=15)
+routeLabel = Label("Route:",10,25,size=20,bold=True,align='left')
 guiGroup = Group(squawkG,altitudeG,squawkD,altitudeD,callsign,callsignD,cruisespdD,cruisespdG,arrow,dep,arr,alt,altD)
 guiGroup.visible = False
+routeGroup.visible = False
 
 #ignore these
 FTF = {}
 text = ""
+routeList = []
 
 #Just asks if the gui is being shown, kinda stupid because we can just call guiGroup.visible and use an If statement
 guiUp = False
@@ -69,6 +73,27 @@ def printResult(val):
         print(i,'->',FTF[i])
     return FTF
 
+def separateRoute(val):
+    route = val['route']
+    print("Route Below:")
+    routeList = route.split()
+    routeLength = len(routeList)
+    for x in range(routeLength):
+        routeSnippet = routeList.pop(0)
+        print(routeSnippet)
+    return routeList
+
+def initRoute(val):
+    route = val['route']
+    routeList = route.split()
+    routeLength = len(routeList)
+    lS2 = 50
+    for x in range(routeLength):
+        routeSnippet = routeList.pop(0)
+        line = Label(routeSnippet,15,lS2,bold=True,size=15,align='left')
+        routeGroup.add(line)
+        lS2 += 20
+
 '''
 Initial text, virtually invisible. Just spits stuff out as it tests the connection.
 It also grabs the current fp when opening to use as the base of the gui. This all gets
@@ -86,9 +111,8 @@ def testSample(lS):
     allInfo = Label(FTFF,200,lS,align="left",font="calibri",size=7.5,bold=True)
     lS += 25
     initGroup.add(flPln,actFlPln,allInfo)
-    sleep(1.5)
+    time.sleep(1.5)
     return FTFF
-
 
 connectAttempt = response.status_code  
 initGroupLineMaker = 25    
@@ -116,6 +140,7 @@ if (eUI == "yes"):
     initGroup.visible = False
     guiUp = True
     guiGroup.visible = True
+    routeGroup.visible = True
 elif (eUI == "no"):
     clA = app.getTextInput("Close Program?").lower()
     if (clA == "yes"):
@@ -125,6 +150,10 @@ elif (eUI == "no"):
         pass
 
 app.currentRefreshTick = 1200
+
+def refreshRoute():
+    routeGroup.clear()
+    initRoute(FTFF)
 
 def onStep():
     if (guiUp == False):
@@ -140,6 +169,9 @@ def onStep():
             dep.value = FTFF['dep']
             arr.value = FTFF['arr']
             alt.value = FTFF['alt']
+            #allRoute = FTFF['route']
+            separateRoute(FTFF)
+            refreshRoute()
     app.currentRefreshTick += 1
 
 
