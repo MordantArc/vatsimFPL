@@ -41,12 +41,12 @@ guiGroup = Group(squawkG,altitudeG,squawkD,altitudeD,callsign,callsignD,cruisesp
 guiGroup.visible = False
 routeGroup.visible = False
 
-#ignore these
+#ignore these, just the starts of the FTF and route list
 FTF = {}
 text = ""
 routeList = []
 
-#Just asks if the gui is being shown, kinda stupid because we can just call guiGroup.visible and use an If statement
+#Just asks if the gui is being shown, kinda *unecessary because we can just call guiGroup.visible and use an If statement
 guiUp = False
 
 #prints any given JSON
@@ -60,7 +60,7 @@ vatsimID = CID.read().split('\n')[1]
 CID.close()
 
 '''
-This is the juicy shit. Val must be a JSON and what it does is it grabs the info from
+This is the juicy *stuff . Val must be a JSON and what it does is it grabs the info from
 the "result" entry in the main dict. The result from that is a list containing the
 sub-dicts that outline each flight. 
 
@@ -75,7 +75,7 @@ def printResult(val):
 
 def separateRoute(val):
     route = val['route']
-    print("Route Below:")
+    print("Filed Route Below:")
     routeList = route.split()
     routeLength = len(routeList)
     for x in range(routeLength):
