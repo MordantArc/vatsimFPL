@@ -14,6 +14,8 @@ refreshTick = 1200
 
 vatsimID = 0
 
+logNo = 0
+
 response = requests.get("https://api.vatsim.net/api/")
 
 baseLink = "https://api.vatsim.net/api/"
@@ -22,7 +24,7 @@ initGroup = Group()
 routeGroup = Group()
 
 
-#Labels n shit that displays changable values from the fp
+#Labels that display changable values from the fp
 squawkG = Label("0000",375,15,bold=True)
 squawkD = Label("Squawk:",335,15)
 altitudeG = Label("0000",375,30,bold=True)
@@ -41,12 +43,13 @@ guiGroup = Group(squawkG,altitudeG,squawkD,altitudeD,callsign,callsignD,cruisesp
 guiGroup.visible = False
 routeGroup.visible = False
 
-#ignore these, just the starts of the FTF and route list
+#ignore these, just the dicts and lists for the FTF and route list
 FTF = {}
 text = ""
 routeList = []
+log = {}
 
-#Just asks if the gui is being shown, kinda *unecessary because we can just call guiGroup.visible and use an If statement
+#Just asks if the gui is being shown, kinda unecessary because we can just call guiGroup.visible and use an If statement
 guiUp = False
 
 #prints any given JSON
@@ -60,7 +63,7 @@ vatsimID = CID.read().split('\n')[1]
 CID.close()
 
 '''
-This is the juicy *stuff . Val must be a JSON and what it does is it grabs the info from
+This is the juicy stuff*. Val must be a JSON and what it does is it grabs the info from
 the "result" entry in the main dict. The result from that is a list containing the
 sub-dicts that outline each flight. 
 
@@ -94,6 +97,23 @@ def initRoute(val):
         routeGroup.add(line)
         lS2 += 20
 
+def uptLogPiece(subj,val):
+    with open('./logs/complete_log.json', 'r') as f:
+        global log
+        log = json.load(f)
+    log[subj] = val
+    with open("./logs/complete_log.json", 'w') as f:
+        json.dump(log, f, indent=4)
+
+def uptLog(subj,notes):
+    curTime = str(time.asctime())
+    uptLogPiece('time', curTime)
+    uptLogPiece('subject',subj)
+    uptLogPiece('notes',notes)
+    global logNo 
+    logNo += 1
+    uptLogPiece('logno',logNo)
+
 '''
 Initial text, virtually invisible. Just spits stuff out as it tests the connection.
 It also grabs the current fp when opening to use as the base of the gui. This all gets
@@ -122,6 +142,7 @@ if (connectAttempt == 200):
     sucCon = Label("Connected to Vatsim API.",5,initGroupLineMaker,align="left",font="calibri",size=15,bold=True)
     initGroupLineMaker += 25
     initGroup.add(sucCon)
+    uptLog('INIT APP','App opened.')
     FTFF = testSample(initGroupLineMaker)
 else:
     print("Error",connectAttempt)
