@@ -1,0 +1,4 @@
+( /// Time /// - Tue Oct 25 23:36:28 2022 )
+( Subject - INIT APP )
+( Notes - App opened and is running properly. )
+( ########## - ########## )
