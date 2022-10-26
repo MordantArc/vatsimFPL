@@ -1,2 +1,0 @@
-#enter Vatsim CID below:
-1669884
