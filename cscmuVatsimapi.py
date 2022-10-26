@@ -1,9 +1,12 @@
+from datetime import date
+import calendar
 from mimetypes import init
 from cmu_graphics import *
 import requests
 import math
 import json
 import time
+import os
 
 app.ticksPerSecond = 60
 
@@ -23,6 +26,8 @@ baseLink = "https://api.vatsim.net/api/"
 initGroup = Group()
 routeGroup = Group()
 
+curDate = ((str(time.asctime())).replace(":","-")).replace(" ","_")
+print(curDate)
 
 #Labels that display changable values from the fp
 squawkG = Label("0000",375,15,bold=True)
@@ -80,11 +85,12 @@ def separateRoute(val):
     route = val['route']
     print("Filed Route Below:")
     routeList = route.split()
+    mstrRouteList = route
     routeLength = len(routeList)
     for x in range(routeLength):
         routeSnippet = routeList.pop(0)
         print(routeSnippet)
-    return routeList
+    return mstrRouteList
 
 def initRoute(val):
     route = val['route']
@@ -96,23 +102,31 @@ def initRoute(val):
         line = Label(routeSnippet,15,lS2,bold=True,size=15,align='left')
         routeGroup.add(line)
         lS2 += 20
+def initLogDir():
+    try:
+        open = open('./logs/logs.txt','r')
+    except FileNotFoundError:
+        os.mkdir("./logs/")
+        stdLogUpt("DIR UPD","'logs' dir not found. Creating new logs dir.")
+
+def stdLogUpt(subj,val):
+    route = ('./logs/log' + curDate + '.txt')
+    with open(route, 'a') as f:
+        f.write('( /// Time /// -' + curDate + ")\n")
+        f.write("( "+ subj + " - " + val + " )" + "\n")
+        f.write("( ########## - ########## )\n")
 
 def uptLogPiece(subj,val):
-    with open('./logs/complete_log.json', 'r') as f:
-        global log
-        log = json.load(f)
-    log[subj] = val
-    with open("./logs/complete_log.json", 'w') as f:
-        json.dump(log, f, indent=4)
+    route = ('./logs/log' + curDate + '.txt')
+    with open(route, 'a') as f:
+        f.write("( "+ subj + " - " + val + " )" + "\n")
 
 def uptLog(subj,notes):
     curTime = str(time.asctime())
-    uptLogPiece('time', curTime)
-    uptLogPiece('subject',subj)
-    uptLogPiece('notes',notes)
-    global logNo 
-    logNo += 1
-    uptLogPiece('logno',logNo)
+    uptLogPiece('/// Time ///', curTime)
+    uptLogPiece('Subject',subj)
+    uptLogPiece('Notes',notes)
+    uptLogPiece("##########","##########")
 
 '''
 Initial text, virtually invisible. Just spits stuff out as it tests the connection.
@@ -142,7 +156,7 @@ if (connectAttempt == 200):
     sucCon = Label("Connected to Vatsim API.",5,initGroupLineMaker,align="left",font="calibri",size=15,bold=True)
     initGroupLineMaker += 25
     initGroup.add(sucCon)
-    uptLog('INIT APP','App opened.')
+    uptLog('INIT APP','App opened and is running properly.')
     FTFF = testSample(initGroupLineMaker)
 else:
     print("Error",connectAttempt)
@@ -150,6 +164,7 @@ else:
     initGroup.add(erCon)
     initGroupLineMaker += 25
     print("An unknown error has occured.")
+    uptLog("XX -|- FATAL ERROR -|- XX","An unknown error has occured. Network error No.",connectAttempt)
     erCon2 = Label("An unknown error has occured.",5,initGroupLineMaker,align="left",font="calibri",size=15,bold=True)
     initGroup.add(erCon2)
     initGroupLineMaker += 25
@@ -162,10 +177,12 @@ if (eUI == "yes"):
     guiUp = True
     guiGroup.visible = True
     routeGroup.visible = True
+    uptLog("GUI START","GUI has been entered, exiting startup stage.")
 elif (eUI == "no"):
     clA = app.getTextInput("Close Program?").lower()
     if (clA == "yes"):
         print("App stopped intentionally. Closing the program.")
+        uptLog("APP STOP", "App stopped intentionally.")
         app.stop()
     else:
         pass
@@ -190,9 +207,11 @@ def onStep():
             dep.value = FTFF['dep']
             arr.value = FTFF['arr']
             alt.value = FTFF['alt']
-            #allRoute = FTFF['route']
-            separateRoute(FTFF)
+            mstrRoute = separateRoute(FTFF)
+            routeString = str(mstrRoute)
+            print(routeString)
             refreshRoute()
+            stdLogUpt("Route Fetch",routeString)
     app.currentRefreshTick += 1
 
 
