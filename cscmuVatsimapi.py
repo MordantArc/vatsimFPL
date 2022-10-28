@@ -1,3 +1,4 @@
+from asyncore import write
 from datetime import date
 import calendar
 from mimetypes import init
@@ -7,6 +8,8 @@ import math
 import json
 import time
 import os
+import csv
+from ccvaClasses import *
 
 app.ticksPerSecond = 60
 
@@ -22,6 +25,10 @@ logNo = 0
 response = requests.get("https://api.vatsim.net/api/")
 
 baseLink = "https://api.vatsim.net/api/"
+
+curDT = str(time.time_ns())
+
+curfile = "./data/datafile"+curDT+".csv"
 
 initGroup = Group()
 routeGroup = Group()
@@ -67,6 +74,11 @@ CID = open('vatsimcid.txt','r')
 vatsimID = CID.read().split('\n')[1] 
 CID.close()
 
+def writeSomethingCSV(file,subj,body,notes):
+    csvCur = CurCSV(file)
+    curt = str(time.time_ns())
+    csvCur.writeFile(curt,subj,body,notes)
+
 '''
 This is the juicy stuff*. Val must be a JSON and what it does is it grabs the info from
 the "result" entry in the main dict. The result from that is a list containing the
@@ -108,6 +120,10 @@ def initLogDir():
     except FileNotFoundError:
         os.mkdir("./logs/")
         stdLogUpt("DIR UPD","'logs' dir not found. Creating new logs dir.")
+    try:
+        os.mkdir("./data/")
+    except:
+        pass
 
 def stdLogUpt(subj,val):
     route = ('./logs/log' + curDate + '.txt')
@@ -151,6 +167,7 @@ def testSample(lS):
 connectAttempt = response.status_code  
 initGroupLineMaker = 25    
 if (connectAttempt == 200):
+    writeSomethingCSV(curfile,'Subject','Body Info','Notes(post scriptum)')
     print("Return", connectAttempt)
     print("Connection success.")
     sucCon = Label("Connected to Vatsim API.",5,initGroupLineMaker,align="left",font="calibri",size=15,bold=True)
@@ -158,6 +175,8 @@ if (connectAttempt == 200):
     initGroup.add(sucCon)
     uptLog('INIT APP','App opened and is running properly.')
     FTFF = testSample(initGroupLineMaker)
+    writeSomethingCSV(curfile,'INIT APP','App opened and is running properly.','Below is data recorded from SimConnect.')
+
 else:
     print("Error",connectAttempt)
     erCon = Label(("Error",connectAttempt),5,initGroupLineMaker,align="left",font="calibri",size=15,bold=True)
@@ -165,10 +184,12 @@ else:
     initGroupLineMaker += 25
     print("An unknown error has occured.")
     uptLog("XX -|- FATAL ERROR -|- XX","An unknown error has occured. Network error No.",connectAttempt)
+    writeSomethingCSV(curfile,'FATAL ERROR','An unknown network error has occured.',f'Error code: {connectAttempt}')
     erCon2 = Label("An unknown error has occured.",5,initGroupLineMaker,align="left",font="calibri",size=15,bold=True)
     initGroup.add(erCon2)
     initGroupLineMaker += 25
     stopApp = Label("Stopping the App.",5,initGroupLineMaker,align="left",font="calibri",size=15,bold=True)
+    writeSomethingCSV(curfile,'APP STOP COMMAND','App is stopping.','This is the end of the file.')
     app.stop()
 
 eUI = "yes" # app.getTextInput("Enter GUI?").lower()
@@ -183,6 +204,7 @@ elif (eUI == "no"):
     if (clA == "yes"):
         print("App stopped intentionally. Closing the program.")
         uptLog("APP STOP", "App stopped intentionally.")
+        writeSomethingCSV(curfile,'APP STOP COMMAND','App is stopping.','This is the end of the file.')
         app.stop()
     else:
         pass
@@ -192,6 +214,12 @@ app.currentRefreshTick = 1200
 def refreshRoute():
     routeGroup.clear()
     initRoute(FTFF)
+
+def updateData():
+    writeSomethingCSV(curfile,'----','DATA PACKET START','----')
+    writeSomethingCSV(curfile,'NO DATA','No data is available to display.','This feature is not available, however if you see this it works :)')
+    writeSomethingCSV(curfile,'----','DATA PACKET END','----')
+    pass
 
 def onStep():
     if (guiUp == False):
@@ -212,6 +240,7 @@ def onStep():
             print(routeString)
             refreshRoute()
             stdLogUpt("Route Fetch",routeString)
+    updateData()
     app.currentRefreshTick += 1
 
 
