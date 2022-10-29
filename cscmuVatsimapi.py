@@ -51,7 +51,11 @@ arr = Label("----",380,350,bold=True,size=24,align='right')
 altD = Label("Alt",200,365,size=12.5)
 alt = Label("----",200,385,bold=True,size=15)
 routeLabel = Label("Route:",10,25,size=20,bold=True,align='left')
-guiGroup = Group(squawkG,altitudeG,squawkD,altitudeD,callsign,callsignD,cruisespdD,cruisespdG,arrow,dep,arr,alt,altD)
+weightD = Label('Weight Catagory:',305,75)
+weightG = Label('----',370,75,bold=True)
+guiGroup = Group(squawkG,altitudeG,squawkD,altitudeD,
+    callsign,callsignD,cruisespdD,cruisespdG,arrow,
+    dep,arr,alt,altD,weightD,weightG)
 guiGroup.visible = False
 routeGroup.visible = False
 
@@ -114,6 +118,14 @@ def initRoute(val):
         line = Label(routeSnippet,15,lS2,bold=True,size=15,align='left')
         routeGroup.add(line)
         lS2 += 20
+
+def stdLogUpt(subj):
+    route = ('./logs/log' + curDate + '.txt')
+    with open(route, 'a') as f:
+        f.write('( /// Time /// -' + curDate + ")\n")
+        f.write(f"({subj})\n\n")
+        f.write("(>~<)\n\n")
+
 def initLogDir():
     try:
         open = open('./logs/logs.txt','r')
@@ -125,24 +137,17 @@ def initLogDir():
     except:
         pass
 
-def stdLogUpt(subj,val):
+def uptLogPiece(subj):
     route = ('./logs/log' + curDate + '.txt')
     with open(route, 'a') as f:
-        f.write('( /// Time /// -' + curDate + ")\n")
-        f.write("( "+ subj + " - " + val + " )" + "\n")
-        f.write("( ########## - ########## )\n")
-
-def uptLogPiece(subj,val):
-    route = ('./logs/log' + curDate + '.txt')
-    with open(route, 'a') as f:
-        f.write("( "+ subj + " - " + val + " )" + "\n")
+        f.write(subj)
 
 def uptLog(subj,notes):
     curTime = str(time.asctime())
-    uptLogPiece('/// Time ///', curTime)
-    uptLogPiece('Subject',subj)
-    uptLogPiece('Notes',notes)
-    uptLogPiece("##########","##########")
+    uptLogPiece(f'/// Time /// - {curTime}\n')
+    uptLogPiece(f'Subject {subj}\n')
+    uptLogPiece(f'Notes: {notes}\n\n')
+    uptLogPiece("-------------------------|-------------------------\n\n")
 
 '''
 Initial text, virtually invisible. Just spits stuff out as it tests the connection.
@@ -221,6 +226,29 @@ def updateData():
     writeSomethingCSV(curfile,'----','DATA PACKET END','----')
     pass
 
+def logMasterUpdate(alt,aspd,squawk,notes=None):
+    mstrRoute = separateRoute(FTFF)
+    routeString = str(mstrRoute)
+    print(routeString)
+    stdLogUpt(f'Route Fetch: {routeString})\n(Altitude Assg {alt})\n(Airspeed assg {aspd})\n(Squawk Assigned {squawk})')
+
+def getWeight():
+    global FTFF
+    aircraftFull = FTFF['aircraft']
+    print(f'Aircraft Type: {aircraftFull}')
+    weightClass = aircraftFull[-2]
+    print(f'Weight Class: {weightClass}')
+    if weightClass == 'L':
+        weightG.value = "Light"
+    elif weightClass == 'M':
+        weightG.value = 'Medium'
+    elif weightClass == 'H':
+        weightG.value = 'Heavy'
+        callsign.value += 'Heavy'
+    elif weightClass == 'S':
+        weightG.value = 'Super'
+        callsign.value += 'Super'
+
 def onStep():
     if (guiUp == False):
         pass
@@ -235,11 +263,9 @@ def onStep():
             dep.value = FTFF['dep']
             arr.value = FTFF['arr']
             alt.value = FTFF['alt']
-            mstrRoute = separateRoute(FTFF)
-            routeString = str(mstrRoute)
-            print(routeString)
+            getWeight()
+            logMasterUpdate(altitudeG.value, cruisespdG, squawkG, notes="Assigned")
             refreshRoute()
-            stdLogUpt("Route Fetch",routeString)
     updateData()
     app.currentRefreshTick += 1
 
